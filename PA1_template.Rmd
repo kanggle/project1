@@ -1,0 +1,72 @@
+---
+title: "Course Project 1"
+author: "kanggle"
+date: "3/23/2020"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lattice)
+```
+##read document
+```{r}
+filedata <- read.csv("./activity.csv")
+totalstepsday <- tapply(filedata$steps, filedata$date, sum)
+```
+##plot histogram
+```{r, echo=FALSE}
+hist(totalstepsday, xlab = "Number of Steps", main = "Histogram: Total Steps per Day")
+```
+##caculate mean & median
+```{r}
+MeanPerDay <- mean(totalstepsday, na.rm = TRUE)
+MedianPerDay <- median(totalstepsday, na.rm = TRUE)
+print(MeanPerDay)
+print(MedianPerDay)
+```
+##Time series plot of the average number of steps taken
+```{r}
+stepsperinter <- tapply(filedata$steps, filedata$interval, mean, na.rm = TRUE)
+plot(as.numeric(stepsperinter), type = 'l', 
+     ylab = 'average steps in the interval across all days', xlab = 'times')
+
+```
+##The 5-minute interval that, on average, contains the maximum number of steps
+```{r}
+maxInterval <- names(sort(stepsperinter, decreasing = TRUE))
+maxSteps <- sort(stepsperinter, decreasing = TRUE)
+print(maxInterval)
+print(maxSteps)
+```
+##Code to describe and show a strategy for imputing missing data
+```{r}
+sum(is.na(filedata$steps))
+filedata2 <- filedata
+naindex <- is.na(filedata2$steps)
+stepsperinter2 <- stepsperinter
+filedata2$steps[naindex] <- stepsperinter2[as.character(filedata2$interval[naindex])]
+newdsum <- tapply(filedata2$steps, filedata2$date, sum, na.rm=TRUE)
+hist(x=newdsum,xlab="daily steps", ylab="frequency",
+     main="The distribution of daily total (without missing data)")
+```
+```{r}
+mean(newdsum)
+median(newdsum)
+```
+```{r}
+filedata2$day <- ifelse(weekdays(as.Date(filedata2$date)) == "Saturday" | weekdays(as.Date(filedata2$date)) == "Sunday", "weekend", "weekday")
+sumweekday <- tapply(filedata2[filedata2$day == "weekday" ,]$steps, filedata2[filedata2$day == "weekday" ,]$interval, mean, na.rm = TRUE)
+sumweekend <- tapply(filedata2[filedata2$day == "weekend" ,]$steps, filedata2[filedata2$day == "weekend" ,]$interval, mean, na.rm = TRUE)
+par(mfrow=c(1,2))
+
+xlab <- 'interval' ; ylab <- 'steps'
+plot(as.numeric(names(sumweekday)), 
+     sumweekday, xlab = xlab,ylab = ylab,
+     main = "Activity Pattern (Weekdays)", 
+     type = "l")
+
+plot(as.numeric(names(sumweekend)), 
+     sumweekend, xlab = xlab,ylab = ylab,
+     main = "Activity Pattern (Weekends)", 
+     type = "l")
+```
